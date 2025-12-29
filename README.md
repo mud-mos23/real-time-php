@@ -26,7 +26,7 @@ Un package PHP moderne et puissant pour créer des applications temps réel avec
 
 ### Via Composer
 ```bash
-composer require votre-username/real-time-php
+composer require mude_mos23/real-time-php
 ```
 ### Installation manuelle
 ```bash
