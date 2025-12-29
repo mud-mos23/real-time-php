@@ -30,7 +30,7 @@ composer require votre-username/real-time-php
 ```
 ### Installation manuelle
 ```bash
-git clone https://github.com/votre-username/real-time-php.git
+git clone https://github.com/mude-mos23/real-time-php.git
 cd real-time-php
 composer install
 ```
