@@ -27,13 +27,17 @@ Un package PHP moderne et puissant pour créer des applications temps réel avec
 ### Via Composer
 ```bash
 composer require votre-username/real-time-php
-Installation manuelle
-bash
+```
+### Installation manuelle
+```bash
 git clone https://github.com/votre-username/real-time-php.git
 cd real-time-php
 composer install
+```
 🚀 Démarrage rapide
+
 1. Créer un serveur WebSocket simple
+```bash
 php
 <?php
 // server.php
@@ -62,7 +66,10 @@ $server->on('message', function($connection, $data) use ($server) {
 });
 
 $server->start();
+```
+
 2. Créer un client PHP
+```bash
 php
 <?php
 // client.php
@@ -78,8 +85,10 @@ $client->on('welcome', function($data) {
 });
 
 $client->emit('message', ['message' => 'Hello World!']);
+```
+
 3. Utiliser l'interface Messenger incluse
-bash
+```bash
 # Démarrer le serveur
 php examples/chat-server.php
 
@@ -88,3 +97,5 @@ php -S localhost:8000 -t examples/
 
 # Ouvrir dans le navigateur
 # http://localhost:8000/chat-client.html
+```
+
