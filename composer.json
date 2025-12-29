@@ -1,0 +1,58 @@
+{
+    "name": "realtime-php/websocket",
+    "description": "Package PHP pour le temps réel avec WebSockets",
+    "type": "library",
+    "license": "MIT",
+    "keywords": ["websocket", "realtime", "chat", "ratchet", "php"],
+    "homepage": "https://github.com/votre-utilisateur/realtime-php",
+    "authors": [
+        {
+            "name": "Votre Nom",
+            "email": "votre@email.com",
+            "role": "Developer"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "RealTimePHP\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "RealTimePHP\\Tests\\": "tests/"
+        }
+    },
+    "require": {
+        "php": ">=7.4",
+        "cboden/ratchet": "^0.4.4",
+        "react/event-loop": "^1.3",
+        "react/socket": "^1.12"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.0",
+        "textalk/websocket": "^1.5"
+    },
+    "suggest": {
+        "ext-event": "Pour de meilleures performances avec ReactPHP",
+        "ext-sockets": "Pour de meilleures performances avec ReactPHP"
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "scripts": {
+        "start": "php examples/chat-server.php",
+        "start-simple": "php examples/simple-server.php",
+        "test": "phpunit tests/",
+        "test-coverage": "phpunit --coverage-html coverage/"
+    },
+    "config": {
+        "sort-packages": true,
+        "optimize-autoloader": true,
+        "preferred-install": "dist",
+        "platform-check": false
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-main": "1.0.x-dev"
+        }
+    }
+}

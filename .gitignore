@@ -1,0 +1,39 @@
+# Dependencies
+/vendor/
+composer.lock
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+logs/
+php_error.log
+
+# Tests
+/coverage/
+.phpunit.result.cache
+
+# System
+.DS_Store
+Thumbs.db
+
+# Runtime
+/tmp/
+/cache/
+
+# Composer
+composer.phar
+
+# OS
+ehthumbs.db
+Icon?
+[Tt]humbs.db

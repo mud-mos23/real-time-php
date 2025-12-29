@@ -1,0 +1,2001 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Messenger Web - Chat en Temps Réel</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary-color: #0084ff;
+            --primary-dark: #0073e6;
+            --secondary-color: #f0f2f5;
+            --dark-color: #050505;
+            --light-color: #ffffff;
+            --gray-color: #65676b;
+            --light-gray: #b0b3b8;
+            --border-color: #dddfe2;
+            --message-sent: #0084ff;
+            --message-received: #e4e6eb;
+            --online-status: #31a24c;
+            --typing-indicator: #65676b;
+            --error-color: #f44336;
+            --warning-color: #ff9800;
+            --success-color: #4caf50;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Helvetica, Arial, sans-serif;
+            background: white;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            color: var(--dark-color);
+        }
+        
+        .messenger-app {
+            width: 100%;
+            max-width: 1400px;
+            height: 90vh;
+            min-height: 700px;
+            background: var(--light-color);
+            border-radius: 15px;
+            overflow: hidden;
+            display: flex;
+        }
+        
+        /* Sidebar (Contacts) */
+        .sidebar {
+            width: 350px;
+            background: var(--light-color);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .sidebar-header {
+            padding: 20px;
+            background: var(--light-color);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+        }
+        
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
+            user-select: none;
+        }
+        
+        .avatar.small {
+            width: 35px;
+            height: 35px;
+            font-size: 14px;
+        }
+        
+        .avatar.online::after {
+            content: '';
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: var(--online-status);
+            border-radius: 50%;
+            border: 2px solid white;
+            bottom: 0;
+            right: 0;
+        }
+        
+        .avatar-container {
+            position: relative;
+        }
+        
+        .user-info h3 {
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        .user-info p {
+            font-size: 12px;
+            color: var(--gray-color);
+        }
+        
+        .sidebar-actions {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .icon-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--secondary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--dark-color);
+            transition: background-color 0.2s;
+            border: none;
+            outline: none;
+        }
+        
+        .icon-btn:hover {
+            background-color: #e4e6e9;
+        }
+        
+        .icon-btn:active {
+            transform: scale(0.95);
+        }
+        
+        .search-container {
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .search-box {
+            position: relative;
+        }
+        
+        .search-box input {
+            width: 100%;
+            padding: 12px 40px 12px 15px;
+            background: var(--secondary-color);
+            border: none;
+            border-radius: 20px;
+            font-size: 15px;
+            outline: none;
+            transition: all 0.3s;
+        }
+        
+        .search-box input:focus {
+            background: var(--light-color);
+            box-shadow: 0 0 0 2px var(--primary-color);
+        }
+        
+        .search-box i {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gray-color);
+        }
+        
+        .contacts-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px 0;
+        }
+        
+        .contact-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            position: relative;
+        }
+        
+        .contact-item:hover {
+            background-color: var(--secondary-color);
+        }
+        
+        .contact-item.active {
+            background-color: #e7f3ff;
+            border-left: 3px solid var(--primary-color);
+        }
+        
+        .contact-avatar {
+            position: relative;
+            margin-right: 12px;
+        }
+        
+        .contact-info {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .contact-info h4 {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .contact-info p {
+            font-size: 13px;
+            color: var(--gray-color);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .contact-typing {
+            font-size: 11px;
+            color: var(--primary-color);
+            font-style: italic;
+            margin-top: 2px;
+            display: none;
+        }
+        
+        .contact-time {
+            font-size: 12px;
+            color: var(--gray-color);
+            text-align: right;
+            min-width: 50px;
+        }
+        
+        .unread-badge {
+            background-color: var(--primary-color);
+            color: white;
+            font-size: 11px;
+            min-width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 5px;
+            padding: 0 6px;
+        }
+        
+        /* Chat area */
+        .chat-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--secondary-color);
+            position: relative;
+        }
+        
+        .chat-header {
+            padding: 20px;
+            background: var(--light-color);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        
+        .chat-contact-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .chat-contact-info h3 {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .chat-contact-info p {
+            font-size: 13px;
+            color: var(--gray-color);
+        }
+        
+        .typing-indicator {
+            height: 20px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            font-size: 13px;
+            color: var(--typing-indicator);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .typing-indicator.show {
+            opacity: 1;
+        }
+        
+        .typing-badge {
+            width: 8px;
+            height: 8px;
+            background-color: var(--primary-color);
+            border-radius: 50%;
+            display: inline-block;
+            animation: pulse 1.5s infinite;
+        }
+        
+        .typing-dots {
+            display: inline-flex;
+            align-items: center;
+        }
+        
+        .typing-dots span {
+            width: 4px;
+            height: 4px;
+            background-color: var(--typing-indicator);
+            border-radius: 50%;
+            margin: 0 1px;
+            display: inline-block;
+            animation: typingDot 1.4s infinite ease-in-out both;
+        }
+        
+        .typing-dots span:nth-child(1) {
+            animation-delay: -0.32s;
+        }
+        
+        .typing-dots span:nth-child(2) {
+            animation-delay: -0.16s;
+        }
+        
+        .chat-actions {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .messages-container {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            scroll-behavior: smooth;
+        }
+        
+        .message-group {
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .message-group-date {
+            text-align: center;
+            font-size: 12px;
+            color: var(--gray-color);
+            margin: 15px 0;
+            position: relative;
+        }
+        
+        .message-group-date::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background-color: var(--border-color);
+            z-index: 1;
+        }
+        
+        .message-group-date span {
+            background-color: var(--secondary-color);
+            padding: 0 10px;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .message {
+            max-width: 65%;
+            margin-bottom: 8px;
+            padding: 10px 15px;
+            border-radius: 18px;
+            position: relative;
+            word-wrap: break-word;
+            animation: fadeIn 0.3s ease-in;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(0.8); opacity: 0.7; }
+            50% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(0.8); opacity: 0.7; }
+        }
+        
+        @keyframes typingDot {
+            0%, 80%, 100% { transform: scale(0); opacity: 0.5; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+        
+        .message.sent {
+            align-self: flex-end;
+            background-color: var(--message-sent);
+            color: white;
+            border-bottom-right-radius: 5px;
+        }
+        
+        .message.received {
+            align-self: flex-start;
+            background-color: var(--message-received);
+            border-bottom-left-radius: 5px;
+        }
+        
+        .message.system {
+            align-self: center;
+            background-color: rgba(0,0,0,0.05);
+            color: var(--gray-color);
+            font-style: italic;
+            text-align: center;
+            max-width: 90%;
+            font-size: 13px;
+        }
+        
+        .message-time {
+            font-size: 11px;
+            margin-top: 5px;
+            text-align: right;
+            opacity: 0.8;
+        }
+        
+        .message-status {
+            font-size: 11px;
+            margin-left: 5px;
+        }
+        
+        .message-input-container {
+            padding: 20px;
+            background: var(--light-color);
+            border-top: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+        
+        .message-input-area {
+            display: flex;
+            align-items: flex-end;
+            gap: 15px;
+        }
+        
+        .input-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .message-input {
+            flex: 1;
+            padding: 12px 20px;
+            background: var(--secondary-color);
+            border: none;
+            border-radius: 20px;
+            font-size: 15px;
+            outline: none;
+            resize: none;
+            max-height: 120px;
+            font-family: inherit;
+            line-height: 1.4;
+            transition: all 0.3s;
+        }
+        
+        .message-input:focus {
+            background: var(--light-color);
+            box-shadow: 0 0 0 2px var(--primary-color);
+        }
+        
+        .send-btn {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+        
+        .send-btn:hover {
+            background-color: var(--primary-dark);
+            transform: scale(1.05);
+        }
+        
+        .send-btn:active {
+            transform: scale(0.95);
+        }
+        
+        .send-btn:disabled {
+            background-color: var(--light-gray);
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        /* Connection panel */
+        .connection-panel {
+            width: 300px;
+            background: var(--light-color);
+            border-left: 1px solid var(--border-color);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            transition: all 0.3s ease;
+        }
+        
+        .connection-panel h3 {
+            margin-bottom: 20px;
+            font-size: 18px;
+            color: var(--dark-color);
+        }
+        
+        .status-container {
+            background: var(--secondary-color);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .status-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        
+        .status-indicator.connected {
+            background-color: var(--online-status);
+            animation: pulse 2s infinite;
+        }
+        
+        .status-indicator.connecting {
+            background-color: var(--warning-color);
+            animation: pulse 1s infinite;
+        }
+        
+        .status-indicator.disconnected {
+            background-color: var(--error-color);
+        }
+        
+        .status-indicator.error {
+            background-color: var(--error-color);
+            animation: pulse 0.5s infinite;
+        }
+        
+        .stat-box {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .stat-box:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        
+        .users-list {
+            flex: 1;
+            margin-top: 10px;
+            overflow-y: auto;
+        }
+        
+        .user-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .user-item:last-child {
+            border-bottom: none;
+        }
+        
+        .user-info-small {
+            flex: 1;
+        }
+        
+        .user-info-small h4 {
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .user-info-small p {
+            font-size: 12px;
+            color: var(--gray-color);
+        }
+        
+        .connection-actions {
+            margin-top: auto;
+            padding-top: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .action-btn {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: none;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .connect-btn {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .connect-btn:hover {
+            background: var(--primary-dark);
+        }
+        
+        .disconnect-btn {
+            background: var(--secondary-color);
+            color: var(--dark-color);
+        }
+        
+        .disconnect-btn:hover {
+            background: #e4e6e9;
+        }
+        
+        /* Mobile menu button */
+        .mobile-menu-btn {
+            display: none;
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 100;
+        }
+        
+        /* Notifications */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 10px;
+            background: white;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 1000;
+            transform: translateX(150%);
+            transition: transform 0.3s ease;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .notification.success {
+            border-left: 4px solid var(--success-color);
+        }
+        
+        .notification.error {
+            border-left: 4px solid var(--error-color);
+        }
+        
+        .notification.warning {
+            border-left: 4px solid var(--warning-color);
+        }
+        
+        .notification.info {
+            border-left: 4px solid var(--primary-color);
+        }
+        
+        /* Loading overlay */
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255,255,255,0.9);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+        
+        .loading-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid var(--secondary-color);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--light-gray);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--gray-color);
+        }
+        
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .messenger-app {
+                max-width: 1000px;
+            }
+            
+            .sidebar {
+                width: 300px;
+            }
+            
+            .connection-panel {
+                width: 250px;
+            }
+        }
+        
+        @media (max-width: 900px) {
+            .connection-panel {
+                position: fixed;
+                right: 0;
+                top: 0;
+                bottom: 0;
+                transform: translateX(100%);
+                z-index: 50;
+                box-shadow: -5px 0 15px rgba(0,0,0,0.1);
+            }
+            
+            .connection-panel.show {
+                transform: translateX(0);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                padding: 0;
+            }
+            
+            .messenger-app {
+                height: 100vh;
+                border-radius: 0;
+                max-width: 100%;
+            }
+            
+            .sidebar {
+                width: 100%;
+                transform: translateX(0);
+            }
+            
+            .chat-area {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                transform: translateX(100%);
+                transition: transform 0.3s ease;
+                z-index: 40;
+            }
+            
+            .chat-area.active {
+                transform: translateX(0);
+            }
+            
+            .mobile-menu-btn {
+                display: block;
+            }
+            
+            .sidebar-header .sidebar-actions {
+                display: none;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .chat-header {
+                padding: 15px;
+            }
+            
+            .messages-container {
+                padding: 15px;
+            }
+            
+            .message-input-container {
+                padding: 15px;
+            }
+            
+            .message {
+                max-width: 85%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Notification System -->
+    <div id="notificationContainer"></div>
+    
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+        <div id="loadingText">Connexion au serveur...</div>
+    </div>
+    
+    <div class="messenger-app">
+        <!-- Mobile Menu Button -->
+        <button class="icon-btn mobile-menu-btn" id="mobileMenuBtn" onclick="toggleSidebar()">
+            <i class="fas fa-bars"></i>
+        </button>
+        
+        <!-- Sidebar (Contacts) -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="user-profile" onclick="showUserProfile()">
+                    <div class="avatar-container">
+                        <div class="avatar online" id="userAvatar">VO</div>
+                    </div>
+                    <div class="user-info">
+                        <h3 id="username">Vous</h3>
+                        <p id="userStatus">En ligne</p>
+                    </div>
+                </div>
+                <div class="sidebar-actions">
+                    <button class="icon-btn" title="Nouvelle conversation" onclick="startNewChat()">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="icon-btn" title="Paramètres" onclick="showSettings()">
+                        <i class="fas fa-cog"></i>
+                    </button>
+                    <button class="icon-btn" title="Panneau de connexion" onclick="toggleConnectionPanel()">
+                        <i class="fas fa-plug"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="search-container">
+                <div class="search-box">
+                    <input type="text" id="contactSearch" placeholder="Rechercher des conversations...">
+                    <i class="fas fa-search"></i>
+                </div>
+            </div>
+            
+            <div class="contacts-container" id="contactsList">
+                <!-- Contacts seront ajoutés dynamiquement ici -->
+            </div>
+        </div>
+        
+        <!-- Chat Area -->
+        <div class="chat-area" id="chatArea">
+            <div class="chat-header">
+                <button class="icon-btn mobile-menu-btn" onclick="backToContacts()" style="position: static;">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <div class="chat-contact-info">
+                    <div class="avatar-container">
+                        <div class="avatar" id="activeChatAvatar">GP</div>
+                    </div>
+                    <div>
+                        <h3 id="activeChatName">Groupe Public</h3>
+                        <div class="typing-indicator" id="typingIndicator">
+                            <span class="typing-badge"></span>
+                            <span id="typingText"></span>
+                            <div class="typing-dots">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="chat-actions">
+                    <button class="icon-btn" title="Rechercher dans la conversation" onclick="searchInChat()">
+                        <i class="fas fa-search"></i>
+                    </button>
+                    <button class="icon-btn" title="Informations sur la conversation" onclick="showChatInfo()">
+                        <i class="fas fa-info-circle"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="messages-container" id="messagesContainer">
+                <!-- Messages apparaîtront ici -->
+            </div>
+            
+            <div class="message-input-container">
+                <div class="message-input-area">
+                    <div class="input-actions">
+                        <button class="icon-btn" title="Ajouter un fichier" onclick="attachFile()">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                        <button class="icon-btn" title="Émoticônes" onclick="toggleEmojiPicker()">
+                            <i class="far fa-smile"></i>
+                        </button>
+                    </div>
+                    <textarea class="message-input" id="messageInput" placeholder="Tapez votre message..." rows="1" disabled></textarea>
+                    <button class="send-btn" id="sendButton" onclick="sendMessage()" disabled>
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Connection Panel -->
+        <div class="connection-panel" id="connectionPanel">
+            <h3>Informations de connexion</h3>
+            
+            <div class="status-container">
+                <div class="status-info">
+                    <div class="status-indicator disconnected" id="statusIndicator"></div>
+                    <span id="statusText">Déconnecté</span>
+                </div>
+                
+                <div class="stat-box">
+                    <span>Connectés:</span>
+                    <span id="connectionCount">0</span>
+                </div>
+                <div class="stat-box">
+                    <span>Messages:</span>
+                    <span id="messageCount">0</span>
+                </div>
+                <div class="stat-box">
+                    <span>Votre ID:</span>
+                    <span id="clientIdDisplay" title="Cliquez pour copier" style="cursor: pointer;" onclick="copyClientId()">-</span>
+                </div>
+                <div class="stat-box">
+                    <span>Ping:</span>
+                    <span id="pingValue">- ms</span>
+                </div>
+            </div>
+            
+            <h3>Utilisateurs en ligne (<span id="onlineCount">0</span>)</h3>
+            <div class="users-list" id="usersList">
+                <!-- Utilisateurs en ligne -->
+            </div>
+            
+            <div class="connection-actions">
+                <button class="action-btn connect-btn" onclick="connect()" id="connectBtn">
+                    <i class="fas fa-plug"></i> Se connecter
+                </button>
+                <button class="action-btn disconnect-btn" onclick="disconnect()" id="disconnectBtn" disabled>
+                    <i class="fas fa-power-off"></i> Déconnecter
+                </button>
+                <button class="action-btn disconnect-btn" onclick="testConnection()">
+                    <i class="fas fa-wifi"></i> Tester la connexion
+                </button>
+                <button class="action-btn disconnect-btn" onclick="clearChat()">
+                    <i class="fas fa-trash"></i> Effacer le chat
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // VARIABLES GLOBALES
+        // ============================================
+        let ws = null;
+        let clientId = '';
+        let messageCount = 0;
+        let connectionCount = 0;
+        let username = '';
+        let activeChat = 'public';
+        let usersOnline = [];
+        let contacts = [
+            { 
+                id: 'public', 
+                name: 'Groupe Public', 
+                avatarText: 'GP', 
+                lastMessage: 'Rejoignez la conversation publique', 
+                unread: 0, 
+                type: 'group',
+                isOnline: true
+            },
+            { 
+                id: 'system', 
+                name: 'Système', 
+                avatarText: 'SYS', 
+                lastMessage: 'Messages système', 
+                unread: 0, 
+                type: 'system',
+                isOnline: true
+            }
+        ];
+        
+        // Variables pour le typing indicator
+        let typingTimeout = null;
+        let typingDebounceTimeout = null;
+        let lastTypingTime = 0;
+        let lastPingTime = 0;
+        let pingInterval = null;
+        
+        // Stockage local des messages
+        let chatMessages = {
+            'public': [],
+            'system': []
+        };
+        
+        // ============================================
+        // INITIALISATION
+        // ============================================
+        function initApp() {
+            console.log('🚀 Initialisation de l\'application Messenger...');
+            
+            // Générer un nom d'utilisateur aléatoire
+            username = generateUsername();
+            
+            // Mettre à jour l'affichage
+            document.getElementById('username').textContent = username;
+            document.getElementById('userAvatar').textContent = username.substring(0, 2).toUpperCase();
+            
+            // Charger les contacts
+            renderContacts();
+            
+            // Sélectionner le chat public par défaut
+            selectContact('public');
+            
+            // Configurer les événements
+            setupEventListeners();
+            
+            // Afficher le message de bienvenue
+            addSystemMessage('Bienvenue dans Messenger Web!', 'public');
+            addSystemMessage('Le système est prêt. Connectez-vous au serveur pour commencer à chatter.', 'system');
+            
+            // Auto-connexion après 2 secondes
+            setTimeout(() => {
+                showNotification('Tentative de connexion automatique...', 'info');
+                connect();
+            }, 2000);
+            
+            showNotification('Application initialisée avec succès!', 'success');
+        }
+        
+        function generateUsername() {
+            const adjectives = ['Super', 'Gentil', 'Joyful', 'Calme', 'Vif', 'Brave', 'Sage', 'Heureux', 'Énergique', 'Créatif'];
+            const nouns = ['Lion', 'Ours', 'Aigle', 'Loup', 'Renard', 'Tigre', 'Panda', 'Dauphin', 'Phoenix', 'Dragon'];
+            const randomAdjective = adjectives[Math.floor(Math.random() * adjectives.length)];
+            const randomNoun = nouns[Math.floor(Math.random() * nouns.length)];
+            return `${randomAdjective}${randomNoun}${Math.floor(Math.random() * 1000)}`;
+        }
+        
+        function setupEventListeners() {
+            // Input de message
+            const messageInput = document.getElementById('messageInput');
+            messageInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+            
+            messageInput.addEventListener('input', function() {
+                // Auto-resize
+                this.style.height = 'auto';
+                this.style.height = (this.scrollHeight) + 'px';
+                
+                // Envoyer l'indicateur d'écriture
+                if (this.value.trim().length > 0) {
+                    sendTypingIndicator();
+                }
+            });
+            
+            messageInput.addEventListener('blur', function() {
+                stopTypingIndicator();
+            });
+            
+            // Recherche de contacts
+            document.getElementById('contactSearch').addEventListener('input', function(e) {
+                filterContacts(e.target.value);
+            });
+            
+            // Gestion du presse-papier
+            document.addEventListener('copy', handleCopy);
+            document.addEventListener('paste', handlePaste);
+            
+            // Gestion de la fermeture de la page
+            window.addEventListener('beforeunload', function(e) {
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    disconnect();
+                }
+            });
+            
+            // Reconnecter si perte de connexion
+            window.addEventListener('online', function() {
+                showNotification('Connexion internet rétablie', 'success');
+                if (!ws || ws.readyState !== WebSocket.OPEN) {
+                    setTimeout(connect, 1000);
+                }
+            });
+            
+            window.addEventListener('offline', function() {
+                showNotification('Connexion internet perdue', 'error');
+            });
+        }
+        
+        // ============================================
+        // GESTION WEBSOCKET
+        // ============================================
+        function connect() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                showNotification('Déjà connecté au serveur', 'warning');
+                return;
+            }
+            
+            showLoading('Connexion au serveur...');
+            updateStatus('connecting', 'Connexion...');
+            
+            try {
+                // URL du serveur WebSocket
+                const wsUrl = 'ws://localhost:8080';
+                console.log(`🔗 Connexion à ${wsUrl}...`);
+                
+                ws = new WebSocket(wsUrl);
+                
+                ws.onopen = function() {
+                    console.log('✅ Connecté au serveur WebSocket');
+                    updateStatus('connected', 'Connecté');
+                    showNotification('Connecté au serveur avec succès!', 'success');
+                    hideLoading();
+                    
+                    // Activer les contrôles
+                    enableControls(true);
+                    
+                    // Envoyer un message d'enregistrement
+                    setTimeout(() => {
+                        registerUser();
+                    }, 500);
+                    
+                    // Démarrer le ping régulier
+                    startPingInterval();
+                };
+                
+                ws.onclose = function(event) {
+                    console.log(`❌ Déconnecté du serveur (code: ${event.code}, raison: ${event.reason || 'none'})`);
+                    updateStatus('disconnected', 'Déconnecté');
+                    
+                    if (event.code !== 1000) {
+                        showNotification(`Déconnecté: ${getCloseReason(event.code)}`, 'error');
+                    }
+                    
+                    // Désactiver les contrôles
+                    enableControls(false);
+                    
+                    // Arrêter le ping
+                    stopPingInterval();
+                    
+                    // Réinitialiser la liste des utilisateurs
+                    usersOnline = [];
+                    renderUsersList();
+                    
+                    // Tentative de reconnexion après 3 secondes
+                    setTimeout(() => {
+                        if (!ws || ws.readyState !== WebSocket.OPEN) {
+                            showNotification('Tentative de reconnexion...', 'info');
+                            connect();
+                        }
+                    }, 3000);
+                };
+                
+                ws.onerror = function(error) {
+                    console.error('❌ Erreur WebSocket:', error);
+                    updateStatus('error', 'Erreur de connexion');
+                    showNotification('Erreur de connexion au serveur', 'error');
+                    hideLoading();
+                };
+                
+                ws.onmessage = function(event) {
+                    messageCount++;
+                    updateMessageCount();
+                    
+                    try {
+                        const data = JSON.parse(event.data);
+                        console.log('📨 Message reçu:', data);
+                        handleServerMessage(data);
+                    } catch (e) {
+                        console.error('❌ Erreur parsing JSON:', e);
+                        addSystemMessage('Message invalide reçu du serveur', activeChat);
+                    }
+                };
+                
+            } catch (error) {
+                console.error('❌ Erreur de connexion:', error);
+                updateStatus('error', 'Erreur');
+                showNotification(`Erreur: ${error.message}`, 'error');
+                hideLoading();
+            }
+        }
+        
+        function disconnect() {
+            if (ws) {
+                console.log('👋 Déconnexion manuelle');
+                ws.close(1000, 'Déconnexion utilisateur');
+                ws = null;
+                showNotification('Déconnecté du serveur', 'info');
+            }
+        }
+        
+        function getCloseReason(code) {
+            const reasons = {
+                1000: 'Connexion fermée normalement',
+                1001: 'Le serveur part',
+                1002: 'Erreur de protocole',
+                1003: 'Données non supportées',
+                1005: 'Pas de code de statut',
+                1006: 'Connexion fermée anormalement',
+                1007: 'Données non valides',
+                1008: 'Violation de politique',
+                1009: 'Message trop grand',
+                1010: 'Extension manquante',
+                1011: 'Erreur interne du serveur'
+            };
+            return reasons[code] || `Code: ${code}`;
+        }
+        
+        // ============================================
+        // GESTION DES MESSAGES SERVEUR
+        // ============================================
+        function handleServerMessage(data) {
+            switch(data.event) {
+                case 'welcome':
+                    handleWelcome(data.data);
+                    break;
+                    
+                case 'registered':
+                    handleRegistered(data.data);
+                    break;
+                    
+                case 'new_message':
+                    handleNewMessage(data.data);
+                    break;
+                    
+                case 'user_joined':
+                    handleUserJoined(data.data);
+                    break;
+                    
+                case 'user_left':
+                    handleUserLeft(data.data);
+                    break;
+                    
+                case 'user_list':
+                    handleUserList(data.data);
+                    break;
+                    
+                case 'typing':
+                    handleTyping(data.data);
+                    break;
+                    
+                case 'typing_stop':
+                    handleTypingStop(data.data);
+                    break;
+                    
+                case 'pong':
+                    handlePong(data.data);
+                    break;
+                    
+                case 'message_received':
+                    handleMessageReceived(data.data);
+                    break;
+                    
+                case 'error':
+                    handleError(data.data);
+                    break;
+                    
+                default:
+                    console.log('⚠️ Événement non géré:', data.event);
+                    handleUnknownEvent(data);
+            }
+        }
+        
+        function handleWelcome(data) {
+            clientId = data.clientId || 'unknown';
+            document.getElementById('clientIdDisplay').textContent = clientId.substring(0, 8) + '...';
+            connectionCount = data.connections || 0;
+            updateConnectionCount();
+            
+            addSystemMessage(data.message || 'Bienvenue sur le serveur WebSocket!', 'system');
+            showNotification('Authentification réussie', 'success');
+        }
+        
+        function handleRegistered(data) {
+            addSystemMessage(`Enregistré en tant que: ${data.username}`, 'system');
+            showNotification(`Bienvenue ${data.username}!`, 'success');
+        }
+        
+        function handleNewMessage(data) {
+            const from = data.from || 'Anonyme';
+            const message = data.message || '';
+            const timestamp = data.timestamp || new Date().toISOString();
+            const chatId = data.chatId || 'public';
+            const userId = data.userId;
+            
+            // Stocker le message
+            if (!chatMessages[chatId]) {
+                chatMessages[chatId] = [];
+            }
+            
+            chatMessages[chatId].push({
+                from,
+                message,
+                timestamp,
+                type: userId === clientId ? 'sent' : 'received'
+            });
+            
+            // Si le message est pour le chat actif, l'afficher
+            if (chatId === activeChat) {
+                addMessage(from, message, timestamp, userId === clientId ? 'sent' : 'received');
+            } else {
+                // Sinon, mettre à jour le compteur de messages non lus
+                updateUnreadCount(chatId, message);
+            }
+            
+            // Arrêter l'indicateur d'écriture de l'expéditeur
+            if (userId !== clientId && data.chatId === activeChat) {
+                hideTypingIndicator();
+            }
+        }
+        
+        function handleUserJoined(data) {
+            connectionCount++;
+            updateConnectionCount();
+            
+            if (data.user) {
+                const userExists = usersOnline.some(u => u.id === data.user.id);
+                if (!userExists) {
+                    usersOnline.push(data.user);
+                    renderUsersList();
+                }
+                
+                // Ajouter comme contact si ce n'est pas déjà fait
+                const contactExists = contacts.some(c => c.id === data.user.id);
+                if (!contactExists && data.user.id !== clientId) {
+                    contacts.push({
+                        id: data.user.id,
+                        name: data.user.username,
+                        avatarText: data.user.avatar || data.user.username.substring(0, 2).toUpperCase(),
+                        lastMessage: 'Nouvel utilisateur',
+                        unread: 0,
+                        type: 'user',
+                        isOnline: true
+                    });
+                    renderContacts();
+                }
+                
+                addSystemMessage(`${data.user.username} a rejoint la conversation`, 'public');
+                showNotification(`${data.user.username} est connecté`, 'info');
+            }
+        }
+        
+        function handleUserLeft(data) {
+            connectionCount = Math.max(0, connectionCount - 1);
+            updateConnectionCount();
+            
+            if (data.userId) {
+                usersOnline = usersOnline.filter(u => u.id !== data.userId);
+                renderUsersList();
+                
+                // Mettre à jour le statut du contact
+                const contactIndex = contacts.findIndex(c => c.id === data.userId);
+                if (contactIndex !== -1) {
+                    contacts[contactIndex].isOnline = false;
+                    contacts[contactIndex].lastMessage = 'Déconnecté';
+                    renderContacts();
+                }
+                
+                addSystemMessage(`${data.username || 'Un utilisateur'} a quitté la conversation`, 'public');
+            }
+        }
+        
+        function handleUserList(data) {
+            usersOnline = data.users || [];
+            renderUsersList();
+        }
+        
+        function handleTyping(data) {
+            if (data.userId !== clientId && activeChat === data.chatId) {
+                showTypingIndicator(data.username, data.chatId);
+            }
+        }
+        
+        function handleTypingStop(data) {
+            if (data.chatId === activeChat) {
+                hideTypingIndicator();
+            }
+        }
+        
+        function handlePong(data) {
+            const pingTime = Date.now() - lastPingTime;
+            document.getElementById('pingValue').textContent = `${pingTime} ms`;
+            
+            // Mettre à jour le statut de connexion
+            updateStatus('connected', 'Connecté');
+        }
+        
+        function handleMessageReceived(data) {
+            // Confirmation que le message a été reçu par le serveur
+            console.log('✅ Message reçu par le serveur:', data);
+        }
+        
+        function handleError(data) {
+            addSystemMessage(`Erreur: ${data.message}`, 'system');
+            showNotification(`Erreur: ${data.message}`, 'error');
+        }
+        
+        function handleUnknownEvent(data) {
+            console.log('Événement inconnu:', data);
+            addSystemMessage(`Événement reçu: ${data.event}`, 'system');
+        }
+        
+        // ============================================
+        // FONCTIONS D'ENVOI
+        // ============================================
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (!message) {
+                showNotification('Veuillez taper un message', 'warning');
+                return;
+            }
+            
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                showNotification('Non connecté au serveur', 'error');
+                return;
+            }
+            
+            // Ajouter immédiatement le message à l'interface
+            const timestamp = new Date().toISOString();
+            addMessage('Vous', message, timestamp, 'sent');
+            
+            // Envoyer au serveur
+            ws.send(JSON.stringify({
+                event: 'message',
+                data: {
+                    message: message,
+                    timestamp: timestamp,
+                    chatId: activeChat,
+                    to: activeChat === 'public' ? null : activeChat
+                }
+            }));
+            
+            // Arrêter l'indicateur d'écriture
+            stopTypingIndicator();
+            
+            // Réinitialiser l'input
+            input.value = '';
+            input.style.height = 'auto';
+            input.focus();
+        }
+        
+        function sendTypingIndicator() {
+            const now = Date.now();
+            
+            // Éviter d'envoyer trop fréquemment
+            if (now - lastTypingTime < 1000) {
+                clearTimeout(typingDebounceTimeout);
+            }
+            
+            typingDebounceTimeout = setTimeout(() => {
+                if (ws && ws.readyState === WebSocket.OPEN && activeChat) {
+                    ws.send(JSON.stringify({
+                        event: 'typing',
+                        data: {
+                            chatId: activeChat,
+                            userId: clientId,
+                            username: username,
+                            timestamp: now
+                        }
+                    }));
+                    lastTypingTime = now;
+                }
+            }, 800);
+            
+            // Arrêter l'indicateur après 3 secondes d'inactivité
+            clearTimeout(typingTimeout);
+            typingTimeout = setTimeout(() => {
+                stopTypingIndicator();
+            }, 3000);
+        }
+        
+        function stopTypingIndicator() {
+            if (ws && ws.readyState === WebSocket.OPEN && activeChat) {
+                ws.send(JSON.stringify({
+                    event: 'typing_stop',
+                    data: {
+                        chatId: activeChat,
+                        userId: clientId
+                    }
+                }));
+            }
+            
+            hideTypingIndicator();
+        }
+        
+        function registerUser() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    event: 'register',
+                    data: {
+                        username: username,
+                        platform: 'Messenger Web',
+                        avatar: document.getElementById('userAvatar').textContent
+                    }
+                }));
+            }
+        }
+        
+        function sendPing() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                lastPingTime = Date.now();
+                ws.send(JSON.stringify({ event: 'ping' }));
+            }
+        }
+        
+        // ============================================
+        // FONCTIONS D'AFFICHAGE
+        // ============================================
+        function addMessage(sender, text, timestamp, type) {
+            const container = document.getElementById('messagesContainer');
+            
+            // Formater la date
+            const date = new Date(timestamp);
+            const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            
+            // Vérifier si on doit ajouter un séparateur de date
+            const lastMessageDate = container.lastElementChild?.dataset?.date;
+            const currentDate = date.toDateString();
+            
+            if (!lastMessageDate || lastMessageDate !== currentDate) {
+                const dateSeparator = document.createElement('div');
+                dateSeparator.className = 'message-group-date';
+                dateSeparator.innerHTML = `<span>${date.toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>`;
+                dateSeparator.dataset.date = currentDate;
+                container.appendChild(dateSeparator);
+            }
+            
+            // Créer le message
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            messageDiv.innerHTML = `
+                <div>${escapeHtml(text)}</div>
+                <div class="message-time">${timeString} ${type === 'sent' ? '<span class="message-status">✓✓</span>' : ''}</div>
+            `;
+            
+            container.appendChild(messageDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        function addSystemMessage(text, chatId = 'system') {
+            if (activeChat === chatId) {
+                const container = document.getElementById('messagesContainer');
+                
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message system';
+                messageDiv.textContent = text;
+                
+                container.appendChild(messageDiv);
+                container.scrollTop = container.scrollHeight;
+            }
+        }
+        
+        function showTypingIndicator(username, chatId) {
+            if (activeChat === chatId) {
+                const indicator = document.getElementById('typingIndicator');
+                const typingText = document.getElementById('typingText');
+                
+                typingText.textContent = `${username} est en train d'écrire`;
+                indicator.classList.add('show');
+                
+                // Mettre à jour aussi dans la liste des contacts si c'est une conversation privée
+                if (chatId !== 'public' && chatId !== 'system') {
+                    updateContactTyping(chatId, true, username);
+                }
+                
+                // Arrêter l'indicateur après 5 secondes
+                clearTimeout(window.typingStopTimeout);
+                window.typingStopTimeout = setTimeout(() => {
+                    hideTypingIndicator(chatId);
+                }, 5000);
+            }
+        }
+        
+        function hideTypingIndicator(chatId = null) {
+            const indicator = document.getElementById('typingIndicator');
+            indicator.classList.remove('show');
+            
+            // Mettre à jour aussi dans la liste des contacts
+            if (chatId && chatId !== 'public' && chatId !== 'system') {
+                updateContactTyping(chatId, false);
+            }
+        }
+        
+        function updateContactTyping(contactId, isTyping, username = '') {
+            const contactItem = document.querySelector(`.contact-item[data-contact-id="${contactId}"]`);
+            if (contactItem) {
+                let typingElement = contactItem.querySelector('.contact-typing');
+                
+                if (isTyping) {
+                    if (!typingElement) {
+                        typingElement = document.createElement('div');
+                        typingElement.className = 'contact-typing';
+                        contactItem.querySelector('.contact-info').appendChild(typingElement);
+                    }
+                    typingElement.textContent = `${username} écrit...`;
+                    typingElement.style.display = 'block';
+                } else if (typingElement) {
+                    typingElement.style.display = 'none';
+                }
+            }
+        }
+        
+        // ============================================
+        // GESTION DES CONTACTS
+        // ============================================
+        function renderContacts() {
+            const container = document.getElementById('contactsList');
+            container.innerHTML = '';
+            
+            contacts.forEach(contact => {
+                const contactItem = document.createElement('div');
+                contactItem.className = `contact-item ${contact.id === activeChat ? 'active' : ''}`;
+                contactItem.dataset.contactId = contact.id;
+                contactItem.onclick = () => selectContact(contact.id);
+                
+                const onlineIndicator = contact.isOnline ? '<span style="color: var(--online-status);">●</span>' : '';
+                
+                contactItem.innerHTML = `
+                    <div class="contact-avatar">
+                        <div class="avatar small">${contact.avatarText}</div>
+                    </div>
+                    <div class="contact-info">
+                        <h4>${contact.name} ${onlineIndicator}</h4>
+                        <p>${contact.lastMessage}</p>
+                        <div class="contact-typing" style="display: none;"></div>
+                    </div>
+                    <div class="contact-time">
+                        ${contact.unread > 0 ? `<div class="unread-badge">${contact.unread}</div>` : ''}
+                    </div>
+                `;
+                
+                container.appendChild(contactItem);
+            });
+        }
+        
+        function filterContacts(searchTerm) {
+            const contactItems = document.querySelectorAll('.contact-item');
+            const term = searchTerm.toLowerCase();
+            
+            contactItems.forEach(item => {
+                const contactName = item.querySelector('h4').textContent.toLowerCase();
+                const contactMessage = item.querySelector('p').textContent.toLowerCase();
+                
+                if (contactName.includes(term) || contactMessage.includes(term) || term === '') {
+                    item.style.display = 'flex';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+        
+        function selectContact(contactId) {
+            activeChat = contactId;
+            
+            // Mettre à jour l'affichage du chat actif
+            const contact = contacts.find(c => c.id === contactId);
+            if (contact) {
+                document.getElementById('activeChatName').textContent = contact.name;
+                document.getElementById('activeChatAvatar').textContent = contact.avatarText;
+                
+                // Réinitialiser les messages non lus
+                contact.unread = 0;
+                renderContacts();
+            }
+            
+            // Effacer les messages affichés et charger les messages du chat
+            const container = document.getElementById('messagesContainer');
+            container.innerHTML = '';
+            
+            // Charger les messages stockés pour ce chat
+            if (chatMessages[contactId]) {
+                chatMessages[contactId].forEach(msg => {
+                    addMessage(msg.from, msg.message, msg.timestamp, msg.type);
+                });
+            } else {
+                // Ajouter un message de bienvenue
+                if (contactId === 'public') {
+                    addSystemMessage('Bienvenue dans le groupe public ! Tous les messages ici sont visibles par tous les utilisateurs connectés.', 'public');
+                } else if (contactId === 'system') {
+                    addSystemMessage('Messages système et notifications');
+                } else {
+                    addSystemMessage(`Conversation avec ${contact?.name}`);
+                }
+            }
+            
+            // Sur mobile, afficher la zone de chat
+            if (window.innerWidth <= 768) {
+                document.getElementById('sidebar').style.display = 'none';
+                document.getElementById('chatArea').classList.add('active');
+            }
+            
+            // Focus sur l'input
+            document.getElementById('messageInput').focus();
+        }
+        
+        function updateUnreadCount(chatId, lastMessage) {
+            const contactIndex = contacts.findIndex(c => c.id === chatId);
+            if (contactIndex !== -1) {
+                contacts[contactIndex].unread++;
+                contacts[contactIndex].lastMessage = lastMessage.substring(0, 30) + (lastMessage.length > 30 ? '...' : '');
+                renderContacts();
+            }
+        }
+        
+        // ============================================
+        // GESTION DES UTILISATEURS
+        // ============================================
+        function renderUsersList() {
+            const container = document.getElementById('usersList');
+            const onlineCount = document.getElementById('onlineCount');
+            
+            container.innerHTML = '';
+            onlineCount.textContent = usersOnline.length;
+            
+            usersOnline.forEach(user => {
+                const userItem = document.createElement('div');
+                userItem.className = 'user-item';
+                
+                userItem.innerHTML = `
+                    <div class="avatar small">${user.avatar || user.username.substring(0, 2).toUpperCase()}</div>
+                    <div class="user-info-small">
+                        <h4>${user.username} ${user.id === clientId ? '(Vous)' : ''}</h4>
+                        <p>${user.connected_at ? `Connecté à ${new Date(user.connected_at).toLocaleTimeString()}` : 'En ligne'}</p>
+                    </div>
+                `;
+                
+                container.appendChild(userItem);
+            });
+            
+            // Si aucun utilisateur
+            if (usersOnline.length === 0) {
+                container.innerHTML = '<div style="text-align: center; color: var(--gray-color); padding: 20px;">Aucun utilisateur connecté</div>';
+            }
+        }
+        
+        // ============================================
+        // FONCTIONS UTILITAIRES
+        // ============================================
+        function updateStatus(status, text) {
+            const indicator = document.getElementById('statusIndicator');
+            const statusText = document.getElementById('statusText');
+            
+            indicator.className = `status-indicator ${status}`;
+            statusText.textContent = text;
+        }
+        
+        function updateConnectionCount() {
+            document.getElementById('connectionCount').textContent = connectionCount;
+        }
+        
+        function updateMessageCount() {
+            document.getElementById('messageCount').textContent = messageCount;
+        }
+        
+        function enableControls(enabled) {
+            document.getElementById('messageInput').disabled = !enabled;
+            document.getElementById('sendButton').disabled = !enabled;
+            document.getElementById('connectBtn').disabled = enabled;
+            document.getElementById('disconnectBtn').disabled = !enabled;
+        }
+        
+        function showNotification(message, type = 'info') {
+            const container = document.getElementById('notificationContainer');
+            const notification = document.createElement('div');
+            
+            const icons = {
+                'success': 'fas fa-check-circle',
+                'error': 'fas fa-exclamation-circle',
+                'warning': 'fas fa-exclamation-triangle',
+                'info': 'fas fa-info-circle'
+            };
+            
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `
+                <i class="${icons[type]}"></i>
+                <span>${escapeHtml(message)}</span>
+            `;
+            
+            container.appendChild(notification);
+            
+            // Afficher avec animation
+            setTimeout(() => notification.classList.add('show'), 10);
+            
+            // Supprimer après 5 secondes
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 300);
+            }, 5000);
+        }
+        
+        function showLoading(text = 'Chargement...') {
+            const overlay = document.getElementById('loadingOverlay');
+            const loadingText = document.getElementById('loadingText');
+            
+            loadingText.textContent = text;
+            overlay.classList.add('show');
+        }
+        
+        function hideLoading() {
+            const overlay = document.getElementById('loadingOverlay');
+            overlay.classList.remove('show');
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function copyClientId() {
+            if (clientId) {
+                navigator.clipboard.writeText(clientId).then(() => {
+                    showNotification('ID copié dans le presse-papier', 'success');
+                });
+            }
+        }
+        
+        function handleCopy(e) {
+            // Logique de gestion du copier
+        }
+        
+        function handlePaste(e) {
+            // Logique de gestion du coller
+        }
+        
+        // ============================================
+        // FONCTIONS DE CONTRÔLE
+        // ============================================
+        function testConnection() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                sendPing();
+                showNotification('Test de connexion envoyé', 'info');
+            } else {
+                showNotification('Non connecté au serveur', 'error');
+            }
+        }
+        
+        function clearChat() {
+            if (confirm('Voulez-vous vraiment effacer tous les messages de ce chat ?')) {
+                const container = document.getElementById('messagesContainer');
+                container.innerHTML = '';
+                
+                if (chatMessages[activeChat]) {
+                    chatMessages[activeChat] = [];
+                }
+                
+                showNotification('Chat effacé', 'success');
+            }
+        }
+        
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.style.display = sidebar.style.display === 'none' ? 'flex' : 'none';
+        }
+        
+        function toggleConnectionPanel() {
+            const panel = document.getElementById('connectionPanel');
+            panel.classList.toggle('show');
+        }
+        
+        function backToContacts() {
+            if (window.innerWidth <= 768) {
+                document.getElementById('sidebar').style.display = 'flex';
+                document.getElementById('chatArea').classList.remove('active');
+            }
+        }
+        
+        function startPingInterval() {
+            stopPingInterval();
+            pingInterval = setInterval(sendPing, 30000); // Ping toutes les 30 secondes
+        }
+        
+        function stopPingInterval() {
+            if (pingInterval) {
+                clearInterval(pingInterval);
+                pingInterval = null;
+            }
+        }
+        
+        // ============================================
+        // FONCTIONS D'INTERFACE (stubs)
+        // ============================================
+        function showUserProfile() {
+            showNotification('Profil utilisateur (bientôt disponible)', 'info');
+        }
+        
+        function startNewChat() {
+            showNotification('Nouvelle conversation (bientôt disponible)', 'info');
+        }
+        
+        function showSettings() {
+            showNotification('Paramètres (bientôt disponible)', 'info');
+        }
+        
+        function searchInChat() {
+            showNotification('Recherche dans le chat (bientôt disponible)', 'info');
+        }
+        
+        function showChatInfo() {
+            showNotification('Informations sur la conversation (bientôt disponible)', 'info');
+        }
+        
+        function attachFile() {
+            showNotification('Ajout de fichier (bientôt disponible)', 'info');
+        }
+        
+        function toggleEmojiPicker() {
+            showNotification('Émoticônes (bientôt disponible)', 'info');
+        }
+        
+        // ============================================
+        // INITIALISATION AU CHARGEMENT
+        // ============================================
+        document.addEventListener('DOMContentLoaded', initApp);
+        
+        // Exposer les fonctions globales
+        window.sendMessage = sendMessage;
+        window.connect = connect;
+        window.disconnect = disconnect;
+        window.testConnection = testConnection;
+        window.clearChat = clearChat;
+        window.toggleSidebar = toggleSidebar;
+        window.toggleConnectionPanel = toggleConnectionPanel;
+        window.backToContacts = backToContacts;
+        window.copyClientId = copyClientId;
+    </script>
+</body>
+</html>
